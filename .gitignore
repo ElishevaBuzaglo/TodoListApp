@@ -1,0 +1,12 @@
+# להתעלם מתיקיות כבדות של ריאקט
+**/node_modules/
+**/dist/
+**/build/
+
+# להתעלם מתיקיות של שרת סי-שארפ
+bin/
+obj/
+.vs/
+.vscode/
+appsettings.json
+appsettings.Development.json
