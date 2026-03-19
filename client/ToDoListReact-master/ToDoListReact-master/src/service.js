@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 // הכתובת של השרת ב-Render - ודאי שזה כולל את ה-/api
-axios.defaults.baseURL = "https://todolist-server-xxf4.onrender.com/api";
-
+axios.defaults.baseURL = process.env.REACT_APP_API_URL;
 // Interceptor שמוסיף את הטוקן לכל בקשה באופן אוטומטי
 axios.interceptors.request.use((config) => {
     const token = localStorage.getItem("token");
