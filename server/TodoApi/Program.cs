@@ -5,10 +5,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-// הגדרת אימות (Authentication) עם JWT
+// 1. הגדרת אימות (Authentication) עם JWT - חייב להיות לפני Build
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -24,65 +23,53 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// 1. הגדרת קונטרולרים (חיוני לעבודה עם שכבות)
+// 2. הגדרת שירותים (Services)
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-// 2. הגדרת CORS - מאפשר ל-React (פורט 3000) לדבר עם השרת
-// builder.Services.AddCors(options =>
-// {
-//     options.AddPolicy("MyCustomPolicy", policy =>
-//     {
-//         policy.WithOrigins("http://localhost:3000")
-//               .AllowAnyHeader()
-//               .AllowAnyMethod();
-//     });
-// });
-
+// 3. הגדרת CORS - פוליסי שמאפשר הכל כדי למנוע חסימות דפדפן
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()   // מאפשר לכל אתר לגשת
-              .AllowAnyMethod()   // מאפשר GET, POST, PUT, DELETE
-              .AllowAnyHeader();  // מאפשר לשלוח טוקנים ב-Header
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 
-// וודאי שמופיעה השורה הזו בהמשך (לפני UseAuthorization):
-app.UseCors("AllowAll");
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// 3. הגדרת MySQL
+// 4. הגדרת MySQL
 var connectionString = builder.Configuration.GetConnectionString("ToDoDB");
 var serverVersion = new MySqlServerVersion(new Version(8, 0, 45));
 
 builder.Services.AddDbContext<ToDoDbContext>(options =>
     options.UseMySql(connectionString, serverVersion));
 
-// 4. רישום ה-Service ב-Dependency Injection
+// 5. רישום ה-Services ב-Dependency Injection
 builder.Services.AddScoped<ItemService>();
-builder.Services.AddScoped<AuthService>(); 
+builder.Services.AddScoped<AuthService>();
+
+// --- כאן נבנית האפליקציה ---
 var app = builder.Build();
 
-// 5. הגדרת Middleware
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-        options.RoutePrefix = string.Empty;
-    });
-}
+// 6. הגדרת Middleware (סדר הפעולות קריטי!)
 
-app.UseCors("MyCustomPolicy");
-//jwt
+// תמיד להציג Swagger ב-Render כדי שנוכל לבדוק שהשרת עובד
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+    options.RoutePrefix = string.Empty; // הופך את ה-Swagger לדף הבית
+});
+
+// ה-CORS חייב לבוא לפני Authentication ו-Authorization
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-// מיפוי הקונטרולרים (במקום ה-MapGet הישנים)
+// מיפוי הקונטרולרים
 app.MapControllers();
 
 app.Run();
