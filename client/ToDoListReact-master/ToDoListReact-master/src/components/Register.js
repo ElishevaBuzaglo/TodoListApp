@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import todoService from '../service.js';
 import { Box, TextField, Button, Typography, Paper, Container, Alert, Divider } from '@mui/material';
 
@@ -13,12 +12,13 @@ function Register({ onBackToLogin }) {
         e.preventDefault();
         setError("");
         try {
-            // שולחים את fullName בתור ה-username לשרת
-           await todoService.register(email, password, fullName);
+            // קריאה ל-service עם הפרמטרים הנכונים
+            await todoService.register(email, password, fullName);
             alert("נרשמת בהצלחה! כעת ניתן להתחבר");
             onBackToLogin();
         } catch (err) {
-            setError("שגיאה בהרשמה. ייתכן והאימייל כבר קיים במערכת.");
+            // הצגת השגיאה הספציפית מהשרת אם קיימת
+            setError(err.response?.data?.message || err.response?.data || "שגיאה בהרשמה. ייתכן והאימייל כבר קיים במערכת.");
         }
     };
 
@@ -69,13 +69,14 @@ function Register({ onBackToLogin }) {
                                 color: '#8B5CF6',
                                 fontWeight: 800,
                                 cursor: 'pointer',
-                                textDecoration: 'none', // גם כאן אין קו
+                                textDecoration: 'none', 
                                 '&:hover': { color: '#7C3AED' }
                             }}
                         >
                             התחבר/י כאן
                         </Box>
-                    </Typography>              </Paper>
+                    </Typography>
+                </Paper>
             </Container>
         </Box>
     );
