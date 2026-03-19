@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import todoService from '../service.js';
 import { Box, TextField, Button, Typography, Paper, Container, Alert, Divider } from '@mui/material';
 
 function Login({ onLogin, toggleRegister }) {
@@ -11,7 +12,7 @@ function Login({ onLogin, toggleRegister }) {
         e.preventDefault();
         setError("");
         try {
-            const response = await axios.post('http://localhost:5049/api/Auth/login', { email, password });
+            const response =await todoService.login(email, password);
             if (response.data.token) {
                 localStorage.setItem("token", response.data.token);
                 onLogin();

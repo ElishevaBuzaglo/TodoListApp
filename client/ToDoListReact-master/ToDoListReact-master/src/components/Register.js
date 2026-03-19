@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import todoService from '../service.js';
 import { Box, TextField, Button, Typography, Paper, Container, Alert, Divider } from '@mui/material';
 
 function Register({ onBackToLogin }) {
@@ -13,11 +14,7 @@ function Register({ onBackToLogin }) {
         setError("");
         try {
             // שולחים את fullName בתור ה-username לשרת
-            await axios.post('http://localhost:5049/api/Auth/register', {
-                email,
-                password,
-                username: fullName
-            });
+           await todoService.register(email, password, fullName);
             alert("נרשמת בהצלחה! כעת ניתן להתחבר");
             onBackToLogin();
         } catch (err) {

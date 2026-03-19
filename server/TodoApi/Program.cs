@@ -28,15 +28,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddControllers();
 
 // 2. הגדרת CORS - מאפשר ל-React (פורט 3000) לדבר עם השרת
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("MyCustomPolicy", policy =>
+//     {
+//         policy.WithOrigins("http://localhost:3000")
+//               .AllowAnyHeader()
+//               .AllowAnyMethod();
+//     });
+// });
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("MyCustomPolicy", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy.AllowAnyOrigin()   // מאפשר לכל אתר לגשת
+              .AllowAnyMethod()   // מאפשר GET, POST, PUT, DELETE
+              .AllowAnyHeader();  // מאפשר לשלוח טוקנים ב-Header
     });
 });
+
+// וודאי שמופיעה השורה הזו בהמשך (לפני UseAuthorization):
+app.UseCors("AllowAll");
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

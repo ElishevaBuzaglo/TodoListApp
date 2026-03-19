@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // כתובת ה-API שלך
-axios.defaults.baseURL = "http://localhost:5049/api";
+axios.defaults.baseURL = "https://todolist-server-xxf4.onrender.com/api";
 
 // Interceptor: מוסיף את הטוקן לכל בקשה באופן אוטומטי
 axios.interceptors.request.use((config) => {
