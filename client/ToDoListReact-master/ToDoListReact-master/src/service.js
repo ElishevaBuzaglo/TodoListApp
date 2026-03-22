@@ -19,20 +19,22 @@ const todoService = {
 
     register: async (email, password, fullName) => {
         // כאן אנחנו ממפים את fullName לשדה Username שהשרת מצפה לו
-        return await axios.post('/Auth/register', { 
-            Email: email, 
-            Password: password, 
-            Username: fullName 
+        return await axios.post('/Auth/register', {
+            Email: email,
+            Password: password,
+            Username: fullName
         });
     },
-
     getTasks: async () => {
         const res = await axios.get('/Items');
         return res.data;
     },
 
     addTask: async (name) => {
-        return await axios.post('/Items', { name, isComplete: false });
+        return await axios.post('/Items', {
+            Name: name,
+            IsComplete: false
+        });
     },
 
     deleteTask: async (id) => {
