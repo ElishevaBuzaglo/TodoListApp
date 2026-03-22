@@ -36,6 +36,11 @@ const todoService = {
             IsComplete: false
         });
     },
+    setCompleted: async (id, isComplete) => {
+        return await axios.put(`/Items/${id}`, { 
+            IsComplete: isComplete 
+        });
+    },
 
     deleteTask: async (id) => {
         return await axios.delete(`/Items/${id}`);
