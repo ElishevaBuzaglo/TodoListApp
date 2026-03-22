@@ -20,9 +20,9 @@ const todoService = {
     register: async (email, password, fullName) => {
         // כאן אנחנו ממפים את fullName לשדה Username שהשרת מצפה לו
         return await axios.post('/Auth/register', { 
-            email: email, 
-            password: password, 
-            username: fullName 
+            Email: email, 
+            Password: password, 
+            Username: fullName 
         });
     },
 

@@ -10,3 +10,6 @@ obj/
 .vscode/
 appsettings.json
 appsettings.Development.json
+
+
+*.mp4
