@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Container, Paper, List, ListItem, ListItemText, IconButton, Checkbox, Typography, Box, Button, InputBase, Avatar, Fade } from '@mui/material';
-import { DeleteOutline, Logout, Add as AddIcon, CheckCircle, RadioButtonUnchecked, WifiOff, Wifi, Sync as SyncIcon } from '@mui/icons-material'; // הוספתי SyncIcon
+import { DeleteOutline, Logout, Add as AddIcon, CheckCircle, RadioButtonUnchecked, WifiOff, Wifi, Sync as SyncIcon } from '@mui/icons-material';
 import { jwtDecode } from 'jwt-decode';
 import md5 from 'md5';
 import service from './service.js';
@@ -14,18 +14,36 @@ function App() {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState("");
   
-  const [isSyncing, setIsSyncing] = useState(false); // סטייט חדש לאייקון
+  const [isSyncing, setIsSyncing] = useState(false); 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showOnlineMessage, setShowOnlineMessage] = useState(false);
 
+  // פונקציה לטעינת המשימות מה-Service (מקומי + שרת)
+  const getTodos = useCallback(async () => {
+    if (token) {
+      try {
+        const data = await service.getTasks();
+        setTodos(data);
+        setIsOnline(navigator.onLine);
+      } catch (error) { 
+        console.error("Error fetching todos:", error);
+      }
+    }
+  }, [token]);
+
   useEffect(() => {
-    // חיבור ה-App לסרוויס כדי לדעת מתי יש סנכרון
+    // הרשמה לעדכוני סטטוס סנכרון (בשביל האייקון המסתובב)
     service.subscribeToSync(setIsSyncing);
 
-    const handleOnline = () => {
+    const handleOnline = async () => {
       setIsOnline(true);
       setShowOnlineMessage(true);
-      service.syncTasks().then(() => getTodos()); // סנכרון כשחוזר האינטרנט
+      
+      // שלב קריטי: מחכים לסיום הסנכרון (שכולל לוגין אוטומטי אם צריך)
+      await service.syncTasks(); 
+      // רק אחרי שהסנכרון הסתיים והטוקן עודכן, טוענים משימות
+      await getTodos(); 
+      
       setTimeout(() => setShowOnlineMessage(false), 3000);
     };
 
@@ -41,24 +59,11 @@ function App() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
-
-  const getTodos = useCallback(async () => {
-    if (token) {
-      try {
-        const data = await service.getTasks();
-        setTodos(data);
-        setIsOnline(true);
-      } catch (error) { 
-        console.error("Error fetching todos:", error);
-      }
-    }
-  }, [token]);
+  }, [getTodos]);
 
   useEffect(() => {
     if (token) {
       if (token.startsWith("offline_token")) {
-        // טיפול בכניסה אופליין
         setUser({ name: "משתמש (אופליין)", email: localStorage.getItem("currentUserEmail") || "" });
         getTodos();
       } else {
@@ -77,7 +82,7 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("currentUserEmail"); // ניקוי אימייל בלוגאוט
+    localStorage.removeItem("currentUserEmail");
     setToken(null);
   };
 
@@ -92,29 +97,29 @@ function App() {
 
     try {
       const addedTask = await service.addTask(taskName);
+      // הוספה מיידית ל-State כדי שהממשק יגיב מהר
       setTodos(prev => [...prev, addedTask]);
     } catch (error) {
-      console.error("Add failed:", error);
       getTodos(); 
     }
   };
 
-  const handleToggle = async (id, currentStatus) => {
+ const handleToggle = async (id, currentStatus) => {
+    if (!id) return;
     setTodos(prev => prev.map(t => t.id === id ? { ...t, IsComplete: !currentStatus } : t));
     try {
       await service.setCompleted(id, !currentStatus);
     } catch (error) {
-      console.error("Toggle failed:", error);
       getTodos(); 
     }
   };
 
   const handleDelete = async (id) => {
+    if (!id) return;
     setTodos(prev => prev.filter(t => t.id !== id));
     try {
       await service.deleteTask(id);
     } catch (error) {
-      console.error("Delete failed:", error);
       getTodos(); 
     }
   };
@@ -148,7 +153,6 @@ function App() {
       <Box sx={{ p: 2, px: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'white', borderBottom: '1px solid #EEE' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="h6" sx={{ fontWeight: 900, color: '#6366F1' }}>TaskMaster</Typography>
-            {/* אייקון סנכרון שמופיע רק כשמסתנכרן */}
             {isSyncing && (
                 <SyncIcon sx={{ 
                     fontSize: 18, 
@@ -181,35 +185,41 @@ function App() {
         </Paper>
 
         <List sx={{ p: 0 }}>
-          {todos.map((t) => (
-            <Paper key={t.id} sx={{ mb: 2, borderRadius: '12px', overflow: 'hidden' }} elevation={0}>
-              <ListItem sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-                  <Checkbox
-                    checked={!!(t.IsComplete || t.isComplete)}
-                    onChange={() => handleToggle(t.id, !!(t.IsComplete || t.isComplete))}
-                    icon={<RadioButtonUnchecked />}
-                    checkedIcon={<CheckCircle sx={{ color: '#10B981' }} />}
-                    sx={{ ml: 1 }}
-                  />
-                  <ListItemText
-                    primary={t.Name || t.name}
-                    sx={{
-                      textAlign: 'right',
-                      '& .MuiListItemText-primary': {
-                        textDecoration: (t.IsComplete || t.isComplete) ? 'line-through' : 'none',
-                        color: (t.IsComplete || t.isComplete) ? '#94A3B8' : '#312E81',
-                        fontWeight: 500
-                      }
-                    }}
-                  />
-                </Box>
-                <IconButton onClick={() => handleDelete(t.id)}>
-                  <DeleteOutline sx={{ color: '#FCA5A5', '&:hover': { color: '#EF4444' } }} />
-                </IconButton>
-              </ListItem>
-            </Paper>
-          ))}
+          {todos.map((t) => {
+            const isComp = !!(t.IsComplete || t.isComplete);
+            const taskId = t.id || t.Id;
+            const taskName = t.Name || t.name;
+
+            return (
+              <Paper key={taskId} sx={{ mb: 2, borderRadius: '12px', overflow: 'hidden' }} elevation={0}>
+                <ListItem sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+                    <Checkbox
+                      checked={isComp}
+                      onChange={() => handleToggle(taskId, isComp)}
+                      icon={<RadioButtonUnchecked />}
+                      checkedIcon={<CheckCircle sx={{ color: '#10B981' }} />}
+                      sx={{ ml: 1 }}
+                    />
+                    <ListItemText
+                      primary={taskName}
+                      sx={{
+                        textAlign: 'right',
+                        '& .MuiListItemText-primary': {
+                          textDecoration: isComp ? 'line-through' : 'none',
+                          color: isComp ? '#94A3B8' : '#312E81',
+                          fontWeight: 500
+                        }
+                      }}
+                    />
+                  </Box>
+                  <IconButton onClick={() => handleDelete(taskId)}>
+                    <DeleteOutline sx={{ color: '#FCA5A5', '&:hover': { color: '#EF4444' } }} />
+                  </IconButton>
+                </ListItem>
+              </Paper>
+            );
+          })}
         </List>
       </Container>
     </Box>
