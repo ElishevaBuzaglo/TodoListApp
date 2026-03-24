@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TodoApi.Models;
+// וודאי שה-Namespace כאן תואם למיקום של ה-ItemDTO שלך
+using TodoApi.DTOs; 
 
 namespace TodoApi.Services
 {
@@ -13,21 +15,30 @@ namespace TodoApi.Services
             return await _context.Items.Where(i => i.UserId == userId).ToListAsync();
         }
 
-        public async Task<Item> CreateAsync(Item newItem, int userId)
+        // שינוי 1: קבלת DTO ויצירת Item חדש ממנו
+        public async Task<Item> CreateAsync(ItemDTO newItemDto, int userId)
         {
-            newItem.UserId = userId;
+            var newItem = new Item
+            {
+                Name = newItemDto.Name,
+                IsComplete = newItemDto.IsComplete,
+                UserId = userId
+            };
+
             _context.Items.Add(newItem);
             await _context.SaveChangesAsync();
             return newItem;
         }
 
-        public async Task<bool> UpdateAsync(int id, Item inputItem, int userId)
+        // שינוי 2: קבלת DTO ועדכון משימה קיימת
+        public async Task<bool> UpdateAsync(int id, ItemDTO inputItemDto, int userId)
         {
             var item = await _context.Items.FirstOrDefaultAsync(i => i.Id == id && i.UserId == userId);
             if (item == null) return false;
 
-            item.IsComplete = inputItem.IsComplete;
-            if (!string.IsNullOrEmpty(inputItem.Name)) item.Name = inputItem.Name;
+            // מיפוי השדות מה-DTO למודל
+            item.IsComplete = inputItemDto.IsComplete;
+            if (!string.IsNullOrEmpty(inputItemDto.Name)) item.Name = inputItemDto.Name;
 
             await _context.SaveChangesAsync();
             return true;
