@@ -18,6 +18,16 @@ function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showOnlineMessage, setShowOnlineMessage] = useState(false);
 
+  // --- תוספת עבור הודעת עדכון גרסה ---
+  const [showUpdateBar, setShowUpdateBar] = useState(false);
+
+  useEffect(() => {
+    const handleUpdate = () => setShowUpdateBar(true);
+    window.addEventListener('swUpdated', handleUpdate);
+    return () => window.removeEventListener('swUpdated', handleUpdate);
+  }, []);
+  // ----------------------------------
+
   // פונקציה לטעינת המשימות מה-Service (מקומי + שרת)
   const getTodos = useCallback(async () => {
     if (token) {
@@ -136,15 +146,25 @@ function App() {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAFF', direction: 'rtl' }}>
       
+      {/* תוספת: הודעת עדכון גרסה כחולה */}
+      {showUpdateBar && (
+        <Box sx={{ bgcolor: '#6366F1', color: 'white', p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, position: 'sticky', top: 0, zIndex: 2000 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>גרסה חדשה זמינה! עדכנו כדי לקבל את השינויים האחרונים.</Typography>
+          <Button size="small" variant="contained" onClick={() => window.location.reload()} sx={{ bgcolor: 'white', color: '#6366F1', '&:hover': { bgcolor: '#F0F0F0' } }}>
+            רענן עכשיו
+          </Button>
+        </Box>
+      )}
+
       {!isOnline && (
-        <Box sx={{ bgcolor: '#FFFBEB', color: '#B45309', p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, borderBottom: '1px solid #FEF3C7', position: 'sticky', top: 0, zIndex: 1100 }}>
+        <Box sx={{ bgcolor: '#FFFBEB', color: '#B45309', p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, borderBottom: '1px solid #FEF3C7', position: 'sticky', top: showUpdateBar ? 56 : 0, zIndex: 1100 }}>
           <WifiOff fontSize="small" />
           <Typography variant="body2" sx={{ fontWeight: 600 }}>מצב אופליין פעיל - המשימות יסונכרנו כשתתחבר/י</Typography>
         </Box>
       )}
 
       <Fade in={showOnlineMessage}>
-        <Box sx={{ bgcolor: '#ECFDF5', color: '#059669', p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, borderBottom: '1px solid #A7F3D0', position: 'sticky', top: 0, zIndex: 1100 }}>
+        <Box sx={{ bgcolor: '#ECFDF5', color: '#059669', p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, borderBottom: '1px solid #A7F3D0', position: 'sticky', top: showUpdateBar ? 56 : 0, zIndex: 1100 }}>
           <Wifi fontSize="small" />
           <Typography variant="body2" sx={{ fontWeight: 600 }}>החיבור חזר! המשימות מסונכרנות כעת ✨</Typography>
         </Box>
