@@ -24,12 +24,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// 2. הגדרת שירותים (Services) - עם תיקון ל-JSON (PascalCase)
+// 2. הגדרת שירותים (Services) - עם תיקון ל-JSON (camelCase)
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // זה גורם לשרת להחזיר Name במקום name, כדי שיהיה סנכרון מלא עם ה-JS
-        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        // התיקון: שימוש ב-CamelCase כדי שיתאים לסטנדרט של JavaScript (id, name וכו')
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -46,7 +46,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 4. הגדרת MySQL - הוספת מנגנון התאוששות (Retry)
+// 4. התחברות למסד הנתונים (MySQL ב-Clever Cloud)
 var connectionString = builder.Configuration.GetConnectionString("ToDoDB");
 var serverVersion = new MySqlServerVersion(new Version(8, 0, 45));
 
@@ -81,16 +81,15 @@ app.Use((context, next) =>
     return next();
 });
 
-app.UseSwagger();
-app.UseSwaggerUI(options =>
+if (app.Environment.IsDevelopment())
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-    options.RoutePrefix = string.Empty; 
-});
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-app.UseCors("AllowAll");
+app.UseHttpsRedirection();
 
-app.UseAuthentication();
+app.UseAuthentication(); // חייב לבוא לפני Authorization
 app.UseAuthorization();
 
 app.MapControllers();
