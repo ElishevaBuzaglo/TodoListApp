@@ -150,7 +150,17 @@ function App() {
       {showUpdateBar && (
         <Box sx={{ bgcolor: '#6366F1', color: 'white', p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, position: 'sticky', top: 0, zIndex: 2000 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>גרסה חדשה זמינה! עדכנו כדי לקבל את השינויים האחרונים.</Typography>
-          <Button size="small" variant="contained" onClick={() => window.location.reload()} sx={{ bgcolor: 'white', color: '#6366F1', '&:hover': { bgcolor: '#F0F0F0' } }}>
+          <Button 
+            size="small" 
+            variant="contained" 
+            onClick={() => {
+              if (window.waitingWorker) {
+                window.waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+              }
+              window.location.reload();
+            }} 
+            sx={{ bgcolor: 'white', color: '#6366F1', '&:hover': { bgcolor: '#F0F0F0' } }}
+          >
             רענן עכשיו
           </Button>
         </Box>
