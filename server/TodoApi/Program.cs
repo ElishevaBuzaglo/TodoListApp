@@ -8,7 +8,7 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. הגדרת אימות (Authentication) עם JWT
+// הגדרת אימות (Authentication) עם JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -24,7 +24,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// 2. הגדרת שירותים (Services) - עם תיקון ל-JSON (camelCase)
+// הגדרת שירותים (Services) - עם תיקון ל-JSON (camelCase)
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -35,7 +35,7 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 3. הגדרת CORS Policy
+// הגדרת CORS Policy
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -46,7 +46,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 4. התחברות למסד הנתונים (MySQL ב-Clever Cloud)
+// התחברות למסד הנתונים (MySQL ב-Clever Cloud)
 var connectionString = builder.Configuration.GetConnectionString("ToDoDB");
 var serverVersion = new MySqlServerVersion(new Version(8, 0, 45));
 
@@ -58,13 +58,13 @@ builder.Services.AddDbContext<ToDoDbContext>(options =>
             errorNumbersToAdd: null)
     ));
 
-// 5. רישום ה-Services
+//  רישום ה-Services
 builder.Services.AddScoped<ItemService>();
 builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 
-// --- 6. הגדרת Middleware ---
+// --- הגדרת Middleware ---
 
 // פתרון ידני ל-CORS ו-Preflight (OPTIONS)
 app.Use((context, next) =>
